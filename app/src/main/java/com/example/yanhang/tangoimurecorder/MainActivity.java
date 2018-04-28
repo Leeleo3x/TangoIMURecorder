@@ -14,6 +14,7 @@ import android.hardware.Camera;
 import android.hardware.SensorEventListener;
 import android.hardware.display.DisplayManager;
 import android.location.Location;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
@@ -101,6 +102,7 @@ public class MainActivity extends AppCompatActivity
 
     private ArrayList<String> mAdfNames = new ArrayList<>();
     private ArrayList<String> mAdfUuids = new ArrayList<>();
+    private CountDownTimer timer;
 
     private UxExceptionEventListener mUxExceptionEventListener = new UxExceptionEventListener() {
         @Override
@@ -189,11 +191,13 @@ public class MainActivity extends AppCompatActivity
     private TextView mLabelSS2AL;
     private TextView mLabelD2SS;
     private TextView mLabelD2AL;
+    private TextView mLabelTimer;
+    private int time = 30;
 
     static final int ROTATION_SENSOR = Sensor.TYPE_GAME_ROTATION_VECTOR;
 
     private Button mStartStopButton;
-    private Button mScanButton;
+//    private Button mScanButton;
 
     private int mCameraToDisplayRotation = 0;
 
@@ -305,10 +309,11 @@ public class MainActivity extends AppCompatActivity
         mLabelSS2AL = (TextView) findViewById(R.id.label_ss_to_al);
         mLabelD2SS = (TextView) findViewById(R.id.label_device_to_ss);
         mLabelD2AL = (TextView) findViewById(R.id.label_device_to_al);
+        mLabelTimer = (TextView) findViewById(R.id.label_time);
 
         mStartStopButton = (Button) findViewById(R.id.button_start_stop);
-        mScanButton = (Button) findViewById(R.id.button_scan);
-        mScanButton.setVisibility(View.GONE);
+//        mScanButton = (Button) findViewById(R.id.button_scan);
+//        mScanButton.setVisibility(View.GONE);
 
         updateConfig();
 
@@ -321,7 +326,7 @@ public class MainActivity extends AppCompatActivity
                         mLabelScanTimes.setText(String.valueOf(wifi_scanner_.getRecordCount()));
                         mLabelWifiNums.setText(String.valueOf(wifi_scanner_.getLatestScanResult().size()));
                         if (mConfig.getWifiEnabled() && !mConfig.getContinuesWifiScan()) {
-                            mScanButton.setEnabled(true);
+//                            mScanButton.setEnabled(true);
                         }
                     }
                 });
@@ -339,6 +344,34 @@ public class MainActivity extends AppCompatActivity
         startActivityForResult(
                 Tango.getRequestPermissionIntent(Tango.PERMISSIONTYPE_ADF_LOAD_SAVE), REQUEST_CODE_AREA_LEARNING
         );
+    }
+
+    private void startTimer() {
+        if (time < 30) {
+            timer.cancel();
+        }
+        time = 0;
+        timer = new CountDownTimer(90 * 1000, 1000) {
+            @Override
+            public void onTick(long l) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mLabelTimer.setText("0:"+checkDigit(time));
+                    }
+                });
+                time++;
+            }
+
+            @Override
+            public void onFinish() {
+            }
+
+            private String checkDigit(int number) {
+                return number <= 9 ? "0" + number : String.valueOf(number);
+            }
+        };
+        timer.start();
     }
 
 
@@ -401,6 +434,7 @@ public class MainActivity extends AppCompatActivity
         mAccessWifiPermissionGranted = checkPermission(Manifest.permission.ACCESS_WIFI_STATE, REQUEST_CODE_ACCESS_WIFI);
         mChangeWifiPermissionGranted = checkPermission(Manifest.permission.CHANGE_WIFI_STATE, REQUEST_CODE_CHANGE_WIFI);
         mCoarseLocationPermissionGranted = checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_CODE_COARSE_LOCATION);
+        mFineLocationPermissionGranted = checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_CODE_FINE_LOCATION);
 
         updateConfig();
         if (mIsTangoInitialized.get()) {
@@ -452,17 +486,17 @@ public class MainActivity extends AppCompatActivity
                 if (mConfig.getWifiEnabled()) {
                     mLabelInfoRedun.setText(String.valueOf(mConfig.getNumRequestsPerScan()));
                     if (mConfig.getContinuesWifiScan()) {
-                        mScanButton.setVisibility(View.INVISIBLE);
+//                        mScanButton.setVisibility(View.INVISIBLE);
                         mLabelInfoWifi.setText("AUTO");
                         mLabelInfoWifiInterval.setText(String.valueOf(mConfig.getWifiScanInterval()));
                     } else {
-                        mScanButton.setVisibility(View.VISIBLE);
+//                        mScanButton.setVisibility(View.VISIBLE);
                         mLabelInfoWifi.setText("Manual");
                         mLabelInfoWifiInterval.setText("N/A");
                     }
                 } else {
                     mLabelInfoRedun.setText("N/A");
-                    mScanButton.setVisibility(View.INVISIBLE);
+//                    mScanButton.setVisibility(View.INVISIBLE);
                     mLabelInfoWifi.setText("OFF");
                 }
 
@@ -604,6 +638,7 @@ public class MainActivity extends AppCompatActivity
         }
         mInitialStepCount = -1.0f;
         mIsRecording.set(true);
+        startTimer();
 
         runOnUiThread(new Runnable() {
             @Override
@@ -650,6 +685,11 @@ public class MainActivity extends AppCompatActivity
         showToast("Stopped");
     }
 
+    public void startTimer(View view) {
+        mRecorder.addTimestamp();
+        startTimer();
+    }
+
     public void startStopRecording(View view) {
         if (!mIsRecording.get()) {
             startNewRecording();
@@ -660,7 +700,7 @@ public class MainActivity extends AppCompatActivity
 
     public void scanWifi(View view) {
         wifi_scanner_.singleScan();
-        mScanButton.setEnabled(false);
+//        mScanButton.setEnabled(false);
     }
 
     private TangoConfig setupTangoConfig(Tango tango) {

@@ -8,6 +8,7 @@ import com.google.atap.tangoservice.TangoPoseData;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.File;
@@ -29,7 +30,7 @@ public class PoseIMURecorder {
 
     MainActivity parent_;
 
-    public static final int SENSOR_COUNT = 8;
+    public static final int SENSOR_COUNT = 9;
     public static final int GYROSCOPE = 0;
     public static final int ACCELEROMETER = 1;
     public static final int MAGNETOMETER = 2;
@@ -38,13 +39,14 @@ public class PoseIMURecorder {
     public static final int ROTATION_VECTOR = 5;
     public static final int TANGO_POSE = 6;
     public static final int STEP_COUNTER = 7;
+    public static final int TIMESTAMP = 8;
 
     private String output_dir;
 
     private BufferedWriter[] file_writers_ = new BufferedWriter[SENSOR_COUNT];
     //private Vector<Vector<String> > data_buffers_ = new Vector<>();
     private String[] default_file_names_ = {"gyro.txt", "acce.txt", "magnet.txt", "linacce.txt",
-            "gravity.txt", "orientation.txt", "pose.txt", "step.txt"};
+            "gravity.txt", "game_rotation_vector.txt", "pose.txt", "step.txt", "timestamp.txt"};
 
     public PoseIMURecorder(String path, MainActivity parent){
         parent_ = parent;
@@ -124,6 +126,16 @@ public class PoseIMURecorder {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public Boolean addTimestamp() {
+        try{
+            file_writers_[TIMESTAMP].write(String.format(Locale.US, "%d\n", SystemClock.elapsedRealtimeNanos()));
+        }catch (IOException e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public Boolean addStepRecord(long timestamp, int value){
