@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity
     private TextView mLabelD2SS;
     private TextView mLabelD2AL;
     private TextView mLabelTimer;
-    private int time = 30;
+    private int time = 200;
 
     static final int ROTATION_SENSOR = Sensor.TYPE_GAME_ROTATION_VECTOR;
 
@@ -347,11 +347,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void startTimer() {
-        if (time < 30) {
+        if (time < 200) {
             timer.cancel();
         }
         time = 0;
-        timer = new CountDownTimer(90 * 1000, 1000) {
+        timer = new CountDownTimer(200 * 1000, 1000) {
             @Override
             public void onTick(long l) {
                 runOnUiThread(new Runnable() {
